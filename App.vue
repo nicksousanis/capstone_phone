@@ -12,9 +12,9 @@
     <button v-bind:onPress="stopTimer" :title="btnTitle3" />
     <text></text>
     <text></text>
-    <button v-bind:onPress="getRaces" :title="btnTitle4" />
+    <button v-bind:onPress="postWorkout" :title="btnTitle4" />
     <text></text>
-    <text>{{ testAxios }}</text>
+    <text>{{ success }}</text>
   </view>
 </template>
 
@@ -29,14 +29,14 @@ export default {
       testSecond: 1,
       totalHours: "00",
       totalMinutes: "00",
-      totalSeconds: 55,
+      totalSeconds: "00",
       btnTitle1: "Start",
       btnTitle2: "Pause",
       title: "Start timer when ready",
       btnTitle3: "Stop",
       recordedTime: null,
-      testAxios: [],
-      btnTitle4: "Get Races"
+      btnTitle4: "Post Workout",
+      success: ""
     };
   },
   methods: {
@@ -82,9 +82,13 @@ export default {
       this.totalHours = "00";
       this.title = "Nice work!!";
     },
-    getRaces: function() {
-      axios.get("http://localhost:3000/api/races").then(response => {
-        this.testAxios = response.data;
+    postWorkout: function() {
+      var params = {
+        workout_time: "00:09:00",
+        user_id: 1
+      };
+      axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
+        this.success = "Workout sucessfully recorded";
       });
     }
   }
