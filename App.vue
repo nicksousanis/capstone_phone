@@ -2,24 +2,34 @@
   <view class="container">
     <text>{{ title }}</text>
     <text></text>
-    <button v-bind:onPress="startTimer" :title="btnTitle1" />
+    <button v-if="time" v-bind:onPress="startTimer" :title="btnTitle1" />
+    <button v-if="time === false" v-bind:onPress="stopTimer" :title="btnTitle3" />
     <text></text>
     <text class="text-container">{{ totalHours }}:{{ totalMinutes }}:{{ totalSeconds }}</text>
     <text></text>
-    <button v-bind:onPress="pauseTimer" :title="btnTitle2" />
+    <button v-if="reset" v-bind:onPress="pauseTimer" :title="btnTitle2" />
+    <button v-if="reset === false" v-bind:onPress="resumeTimer" :title="btnTitle5" />
     <text></text>
+    <text>Distance: {{ displayDistance }} miles</text>
     <text></text>
-    <button v-bind:onPress="stopTimer" :title="btnTitle3" />
-    <text></text>
+    <text>{{ milesPerHour }} MPH</text>
     <text></text>
     <button v-bind:onPress="postWorkout" :title="btnTitle4" />
     <text></text>
     <text>{{ success }}</text>
+    <text></text>
+    <button v-if="reset2" v-bind:onPress="getLocation" :title="btnTitle6" />
+    <button v-if="reset2 === false" v-bind:onPress="stopLocation" :title="btnTitle3" />
+    <text></text>
   </view>
 </template>
 
 <script>
-import { Constants, Location, Permissions } from "expo";
+import { Constants } from "expo";
+import * as Permissions from "expo-permissions";
+import * as Location from "expo-location";
+import * as geolib from "geolib";
+
 import axios from "axios";
 
 export default {
@@ -30,13 +40,26 @@ export default {
       totalHours: "00",
       totalMinutes: "00",
       totalSeconds: "00",
+      allSeconds: 0,
       btnTitle1: "Start",
       btnTitle2: "Pause",
       title: "Start timer when ready",
       btnTitle3: "Stop",
       recordedTime: null,
       btnTitle4: "Post Workout",
-      success: ""
+      success: "",
+      reset: true,
+      btnTitle5: "Resume",
+      time: true,
+      errorMessage: "",
+      locations: [],
+      btnTitle6: "Get Location",
+      timer2: null,
+      reset2: true,
+      totalDistance: 0,
+      newDistance: 0,
+      displayDistance: "0.000",
+      milesPerHour: 0
     };
   },
   methods: {
@@ -48,6 +71,7 @@ export default {
     },
     updateTime: function() {
       this.totalSeconds = +this.totalSeconds + 1;
+      this.allSeconds = this.allSeconds + 1;
       if (this.totalSeconds <= 9) {
         this.totalSeconds = `0${this.totalSeconds}`;
       }
@@ -65,30 +89,81 @@ export default {
       }
     },
     startTimer: function() {
+      this.recordedTime = null;
+      this.totalSeconds = "00";
+      this.totalMinutes = "00";
+      this.totalHours = "00";
       this.timer = setInterval(this.updateTime, 1000);
       this.title = "Keep running!!";
+      this.time = false;
     },
     pauseTimer: function() {
       clearInterval(this.timer);
       this.timer = null;
       this.title = "Never quit, keep going!!";
+      this.reset = false;
+    },
+    resumeTimer: function() {
+      this.timer = setInterval(this.updateTime, 1000);
+      this.title = "Keep running!!";
+      this.reset = true;
     },
     stopTimer: function() {
       clearInterval(this.timer);
       this.timer = null;
-      this.recordedTime = this.totalSeconds;
-      this.totalSeconds = "00";
-      this.totalMinutes = "00";
-      this.totalHours = "00";
+      this.recordedTime = `${this.totalHours}:${this.totalMinutes}:${this.totalSeconds}`;
+
       this.title = "Nice work!!";
+      this.time = true;
     },
     postWorkout: function() {
       var params = {
-        workout_time: "00:09:00",
+        workout_time: this.recordedTime,
         user_id: 1
       };
       axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
         this.success = "Workout sucessfully recorded";
+      });
+    },
+    getPermission: function() {
+      Permissions.askAsync(Permissions.LOCATION)
+        .then(status => {
+          if (status !== "granted") {
+            this.errorMessage = "Permission to access location was denied";
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    },
+    getLocation: function() {
+      this.timer2 = setInterval(this.updateLocation, 5000);
+      this.reset2 = false;
+    },
+    stopLocation: function() {
+      clearInterval(this.timer2);
+      this.timer2 = null;
+      this.reset2 = true;
+    },
+    updateLocation: function() {
+      Location.getCurrentPositionAsync({}).then(location1 => {
+        this.locations.push(location1);
+        console.log(this.locations);
+        if (this.locations.length > 1) {
+          this.newDistance =
+            geolib.getDistance(
+              {
+                latitude: this.locations[this.locations.length - 1].coords.latitude,
+                longitude: this.locations[this.locations.length - 1].coords.longitude
+              },
+              {
+                latitude: this.locations[this.locations.length - 2].coords.latitude,
+                longitude: this.locations[this.locations.length - 2].coords.longitude
+              }
+            ) * 0.0006213712;
+          this.totalDistance = this.totalDistance + this.newDistance;
+          this.displayDistance = this.totalDistance.toFixed(3);
+        }
       });
     }
   }

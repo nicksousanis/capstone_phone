@@ -9,10 +9,14 @@
   },
   "dependencies": {
     "axios": "^0.19.1",
-    "expo": "~36.0.0",
+    "expo": "^36.0.2",
+    "expo-permissions": "~8.0.0",
+    "geolib": "^3.2.1",
+    "mapbox-gl": "^1.6.1",
     "react": "~16.9.0",
     "react-dom": "~16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-36.0.0.tar.gz",
+    "react-native-maps": "^0.26.1",
     "react-native-web": "~0.11.7",
     "vue-native-core": "^0.1.4",
     "vue-native-helper": "^0.1.4"
