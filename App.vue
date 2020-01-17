@@ -12,14 +12,15 @@
     <text></text>
     <text>Distance: {{ displayDistance }} miles</text>
     <text></text>
-    <text>{{ milesPerHour }} MPH</text>
+    <text>{{ displayMPH }} MPH</text>
+    <text></text>
+    <button v-bind:onPress="clearEverything" :title="btnTitle7" />
     <text></text>
     <button v-bind:onPress="postWorkout" :title="btnTitle4" />
-    <text></text>
     <text>{{ success }}</text>
     <text></text>
-    <button v-if="reset2" v-bind:onPress="getLocation" :title="btnTitle6" />
-    <button v-if="reset2 === false" v-bind:onPress="stopLocation" :title="btnTitle3" />
+    <!--     <button v-if="reset2" v-bind:onPress="getLocation" :title="btnTitle6" />
+    <button v-if="reset2 === false" v-bind:onPress="stopLocation" :title="btnTitle3" /> -->
     <text></text>
   </view>
 </template>
@@ -59,7 +60,11 @@ export default {
       totalDistance: 0,
       newDistance: 0,
       displayDistance: "0.000",
-      milesPerHour: 0
+      milesPerHour: 0,
+      timer3: null,
+      displayMPH: "0.00",
+      btnTitle7: "Clear",
+      postDistance: 3.33
     };
   },
   methods: {
@@ -96,17 +101,29 @@ export default {
       this.timer = setInterval(this.updateTime, 1000);
       this.title = "Keep running!!";
       this.time = false;
+      this.displayDistance = "0.000";
+      this.timer2 = setInterval(this.updateLocation, 5000);
+      this.reset2 = false;
+      this.timer3 = setInterval(this.updateMPH, 5000);
     },
     pauseTimer: function() {
       clearInterval(this.timer);
       this.timer = null;
       this.title = "Never quit, keep going!!";
       this.reset = false;
+      clearInterval(this.timer2);
+      this.timer2 = null;
+      this.reset2 = true;
+      clearInterval(this.timer3);
+      this.timer3 = null;
     },
     resumeTimer: function() {
       this.timer = setInterval(this.updateTime, 1000);
       this.title = "Keep running!!";
       this.reset = true;
+      this.timer2 = setInterval(this.updateLocation, 5000);
+      this.reset2 = false;
+      this.timer3 = setInterval(this.updateMPH, 5000);
     },
     stopTimer: function() {
       clearInterval(this.timer);
@@ -115,11 +132,18 @@ export default {
 
       this.title = "Nice work!!";
       this.time = true;
+      clearInterval(this.timer2);
+      this.timer2 = null;
+      this.reset2 = true;
+      this.reset = true;
+      this.timer3 = null;
     },
     postWorkout: function() {
       var params = {
         workout_time: this.recordedTime,
-        user_id: 1
+        user_id: 1,
+        distance: this.totalDistance.toFixed(3),
+        locations: this.locations
       };
       axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
         this.success = "Workout sucessfully recorded";
@@ -148,7 +172,7 @@ export default {
     updateLocation: function() {
       Location.getCurrentPositionAsync({}).then(location1 => {
         this.locations.push(location1);
-        console.log(this.locations);
+        // console.log(this.locations);
         if (this.locations.length > 1) {
           this.newDistance =
             geolib.getDistance(
@@ -164,7 +188,27 @@ export default {
           this.totalDistance = this.totalDistance + this.newDistance;
           this.displayDistance = this.totalDistance.toFixed(3);
         }
+        // console.log(this.locations);
       });
+    },
+    updateMPH: function() {
+      this.milesPerHour = this.totalDistance / this.allSeconds;
+      this.displayMPH = this.milesPerHour.toFixed(2);
+    },
+    clearEverything: function() {
+      this.totalSeconds = "00";
+      this.totalMinutes = "00";
+      this.totalHours = "00";
+      this.milesPerHour = 0;
+      this.displayMPH = "0.00";
+      this.totalDistance = 0;
+      this.newDistance = 0;
+      this.displayDistance = "0.000";
+      clearInterval(this.timer);
+      clearInterval(this.timer2);
+      clearInterval(this.timer3);
+      this.success = "";
+      this.title = "Start timer when ready";
     }
   }
 };
