@@ -12,8 +12,8 @@
     <text></text>
     <text>Distance: {{ displayDistance }} miles</text>
     <text></text>
-    <text>{{ displayMPH }} MPH</text>
-    <text></text>
+    <!-- <text>{{ displayMPH }} MPH</text> -->
+
     <button v-bind:onPress="clearEverything" :title="btnTitle7" />
     <text></text>
     <button v-bind:onPress="postWorkout" :title="btnTitle4" />
@@ -30,6 +30,7 @@ import { Constants } from "expo";
 import * as Permissions from "expo-permissions";
 import * as Location from "expo-location";
 import * as geolib from "geolib";
+import { Alert } from "react-native";
 
 import axios from "axios";
 
@@ -64,7 +65,11 @@ export default {
       timer3: null,
       displayMPH: "0.00",
       btnTitle7: "Clear",
-      postDistance: 3.33
+      postDistance: 3.33,
+      shoes: [],
+      shoe1: 0,
+      shoe2: 0,
+      shoe3: 0
     };
   },
   methods: {
@@ -139,14 +144,27 @@ export default {
       this.timer3 = null;
     },
     postWorkout: function() {
-      var params = {
-        workout_time: this.recordedTime,
-        user_id: 1,
-        distance: this.totalDistance.toFixed(3),
-        locations: this.locations
-      };
-      axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
-        this.success = "Workout sucessfully recorded";
+      axios.get("https://rocky-refuge-83349.herokuapp.com/api/shoes").then(response => {
+        this.shoes = response.data;
+        this.shoe1 = this.shoes[0].distance;
+        this.shoe2 = this.shoes[1].distance;
+        this.shoe3 = this.shoes[2].distance;
+        console.log(this.shoes);
+        console.log(this.shoe1, this.shoes[0].name);
+        console.log(this.shoe2, this.shoes[1].name);
+        console.log(this.shoe3, this.shoes[2].name);
+        console.log(this.totalDistance);
+
+        Alert.alert(
+          "Please select your shoe",
+          "Select the shoe you wore for this workout",
+          [
+            { text: this.shoes[0].name, onPress: () => this.updateShoe1(this.shoes[0]) },
+            { text: this.shoes[1].name, onPress: () => this.updateShoe2(this.shoes[1]) },
+            { text: this.shoes[2].name, onPress: () => this.updateShoe3(this.shoes[2]) }
+          ],
+          { cancelable: true }
+        );
       });
     },
     getPermission: function() {
@@ -209,6 +227,63 @@ export default {
       clearInterval(this.timer3);
       this.success = "";
       this.title = "Start timer when ready";
+      this.locations = [];
+    },
+    updateShoe1: function(shoe) {
+      var distance = parseInt(this.shoe3, 10) + this.totalDistance;
+      console.log(distance);
+      var params1 = {
+        distance: distance
+      };
+      axios.patch("https://rocky-refuge-83349.herokuapp.com/api/shoes/" + shoe.id, params1).then(response => {
+        var params = {
+          workout_time: this.recordedTime,
+          user_id: 1,
+          distance: this.totalDistance.toFixed(3),
+          locations: this.locations
+        };
+        axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
+          this.success = "Workout sucessfully recorded";
+        });
+      });
+    },
+
+    updateShoe2: function(shoe) {
+      var distance = parseInt(this.shoe3, 10) + this.totalDistance;
+      console.log(distance);
+
+      var params1 = {
+        distance: distance
+      };
+      axios.patch("https://rocky-refuge-83349.herokuapp.com/api/shoes/" + shoe.id, params1).then(response => {
+        var params = {
+          workout_time: this.recordedTime,
+          user_id: 1,
+          distance: this.totalDistance.toFixed(3),
+          locations: this.locations
+        };
+        axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
+          this.success = "Workout sucessfully recorded";
+        });
+      });
+    },
+    updateShoe3: function(shoe) {
+      var distance = parseInt(this.shoe3, 10) + this.totalDistance;
+      console.log(distance);
+      var params1 = {
+        distance: distance
+      };
+      axios.patch("https://rocky-refuge-83349.herokuapp.com/api/shoes/" + shoe.id, params1).then(response => {
+        var params = {
+          workout_time: this.recordedTime,
+          user_id: 1,
+          distance: this.totalDistance.toFixed(3),
+          locations: this.locations
+        };
+        axios.post("https://rocky-refuge-83349.herokuapp.com/api/workouts", params).then(response => {
+          this.success = "Workout sucessfully recorded";
+        });
+      });
     }
   }
 };
