@@ -230,7 +230,7 @@ export default {
       this.locations = [];
     },
     updateShoe1: function(shoe) {
-      var distance = parseInt(this.shoe3, 10) + this.totalDistance;
+      var distance = parseInt(this.shoe1, 10) + this.totalDistance;
       console.log(distance);
       var params1 = {
         distance: distance
@@ -249,7 +249,7 @@ export default {
     },
 
     updateShoe2: function(shoe) {
-      var distance = parseInt(this.shoe3, 10) + this.totalDistance;
+      var distance = parseInt(this.shoe2, 10) + this.totalDistance;
       console.log(distance);
 
       var params1 = {
